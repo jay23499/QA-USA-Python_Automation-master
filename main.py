@@ -13,29 +13,32 @@ class TestUrbanRoutes:
         capabilities = DesiredCapabilities.CHROME
         capabilities["goog:loggingPrefs"] = {'performance': 'ALL'}
         cls.driver = webdriver.Chrome()
+        if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
+            print("Connected to the Urban Routes server")
+        else:
+            print("Cannot connect to Urban Routes. Check the server is on and still running")
 
-    def setup_method(self, method):
-        if not helpers.is_url_reachable(data.URBAN_ROUTES_URL, timeout=10):
-            pytest.skip("Urban Routes server not reachable")
-        self.page = UrbanRoutesPage(self.driver)
-        self.page.driver.get(data.URBAN_ROUTES_URL)
 
     def test_set_route(self):
-        """Set From and To addresses"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         page.fill_address_from(data.ADDRESS_FROM)
         page.fill_address_to(data.ADDRESS_TO)
-        page.click_call_taxi()
+
+
         assert self.page.get_address_from() == data.ADDRESS_FROM
         assert self.page.get_address_to() == data.ADDRESS_TO
 
     def test_select_supportive_plan(self):
-        """Select supportive tariff only if not already selected"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         if not self.page.is_supportive_plan_selected():
             self.page.select_supportive_plan()
         assert self.page.is_supportive_plan_selected()
 
     def test_fill_phone_number(self):
-        """Fill phone number and retrieve SMS code"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         self.page.fill_phone_number(data.PHONE_NUMBER)
         time.sleep(2)  # Wait for SMS network traffic
         code = helpers.retrieve_phone_code(self.driver)
@@ -44,15 +47,16 @@ class TestUrbanRoutes:
         assert self.page.get_phone_number() == data.PHONE_NUMBER
 
     def test_fill_card(self):
-        """Add credit card and handle focus issue on CVV"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         self.page.fill_card(data.CARD_NUMBER, data.CARD_CODE)
-        # Simulate focus change (TAB) to trigger 'Link' button activation
         ActionChains(self.driver).send_keys(Keys.TAB).perform()
         self.page.click_link_card_button()
         assert self.page.is_card_linked(data.CARD_NUMBER)
 
     def test_comment_for_driver_flow(self):
-        """Add a comment for the driver"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         page.fill_address_from(data.ADDRESS_FROM)
         page.fill_address_to(data.ADDRESS_TO)
         page.click_call_taxi()
@@ -61,18 +65,21 @@ class TestUrbanRoutes:
         assert self.page.get_comment_for_driver() == data.MESSAGE_FOR_DRIVER
 
     def test_order_blanket_and_handkerchiefs(self):
-        """Order blanket and handkerchiefs"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         self.page.order_blanket_and_handkerchiefs()
         assert self.page.is_blanket_ordered()
         assert self.page.is_handkerchief_ordered()
 
     def test_order_2_ice_creams(self):
-        """Order ice creams"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         self.page.order_ice_creams(count=2)
         assert self.page.get_ice_cream_count() == 2
 
     def test_order_supportive_taxi(self):
-        """Order taxi with Supportive tariff and verify car search modal"""
+        page = UrbanRoutesPage(self.driver)
+        self.driver.get(data.URBAN_ROUTES_URL)
         page.fill_address_from(data.ADDRESS_FROM)
         page.fill_address_to(data.ADDRESS_TO)
         page.select_supportive_plan()

@@ -22,7 +22,7 @@ class TestUrbanRoutes(unittest.TestCase):
         if not helpers.is_url_reachable(data.URBAN_ROUTES_URL):
             raise unittest.SkipTest("Urban Routes server not reachable")
         else:
-            print("Connection established with Urban Routes server")
+            print("Connection established with Urban Route")
 
     def test_set_route(self):
         """Verify that route addresses can be set correctly."""

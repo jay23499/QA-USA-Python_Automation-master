@@ -142,5 +142,5 @@ class TestUrbanRoutes(unittest.TestCase):
         self.assertNotEqual(car_name, "")
 
     @classmethod
-    def tearDownClass(cls):
+    def TearDownClass(cls):
         cls.driver.quit()

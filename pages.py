@@ -1,112 +1,120 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class UrbanRoutesPage:
-    def __init__(self, driver):
+    def __init__(self, driver: WebDriver):
         self.driver = driver
+        self.wait = WebDriverWait(driver, 10)
 
-    # Locators
-    ADDRESS_FROM_INPUT = (By.ID, "address-from")
-    ADDRESS_TO_INPUT = (By.ID, "address-to")
-    CALL_TAXI_BUTTON = (By.ID, "call-taxi")
-    SUPPORTIVE_PLAN_CHECKBOX = (By.ID, "supportive-plan")
-    PHONE_INPUT = (By.ID, "phone-number")
-    CONFIRMATION_CODE_INPUT = (By.ID, "confirmation-code")
-    CARD_NUMBER_INPUT = (By.ID, "card-number")
-    CARD_CODE_INPUT = (By.ID, "card-code")
-    LINK_CARD_BUTTON = (By.ID, "link-card")
-    COMMENT_INPUT = (By.ID, "driver-comment")
-    TARIFF_SELECTOR = (By.ID, "tariff")
-    BLANKET_CHECKBOX = (By.ID, "order-blanket")
-    HANDKERCHIEF_CHECKBOX = (By.ID, "order-handkerchiefs")
-    ICE_CREAM_INPUT = (By.ID, "ice-cream-count")
-    CAR_SEARCH_MODAL = (By.ID, "car-search-modal")
-    CAR_MODEL_NAME = (By.ID, "car-model-name")
+    # --- Address fields ---
+    def fill_address_from(self, address: str) -> None:
+        from_input = self.driver.find_element(By.ID, "address-from")
+        from_input.clear()
+        from_input.send_keys(address)
 
-    # Actions
-    def fill_address_from(self, address):
-        self.driver.find_element(*self.ADDRESS_FROM_INPUT).clear()
-        self.driver.find_element(*self.ADDRESS_FROM_INPUT).send_keys(address)
+    def fill_address_to(self, address: str) -> None:
+        to_input = self.driver.find_element(By.ID, "address-to")
+        to_input.clear()
+        to_input.send_keys(address)
 
-    def fill_address_to(self, address):
-        self.driver.find_element(*self.ADDRESS_TO_INPUT).clear()
-        self.driver.find_element(*self.ADDRESS_TO_INPUT).send_keys(address)
+    def get_address_from(self) -> str:
+        return self.driver.find_element(By.ID, "address-from").get_attribute("value")
 
-    def click_call_taxi(self):
-        self.driver.find_element(*self.CALL_TAXI_BUTTON).click()
+    def get_address_to(self) -> str:
+        return self.driver.find_element(By.ID, "address-to").get_attribute("value")
 
-    def select_supportive_plan(self):
-        box = self.driver.find_element(*self.SUPPORTIVE_PLAN_CHECKBOX)
-        if not box.is_selected():
-            box.click()
+    # --- Call taxi ---
+    def click_call_taxi(self) -> None:
+        self.driver.find_element(By.ID, "call-taxi-button").click()
 
-    def is_supportive_plan_selected(self):
-        return self.driver.find_element(*self.SUPPORTIVE_PLAN_CHECKBOX).is_selected()
+    # --- Tariff / plan selection ---
+    def select_supportive_plan(self) -> None:
+        self.driver.find_element(By.ID, "plan-supportive").click()
 
-    def fill_phone_number(self, number):
-        self.driver.find_element(*self.PHONE_INPUT).clear()
-        self.driver.find_element(*self.PHONE_INPUT).send_keys(number)
+    def is_supportive_plan_selected(self) -> bool:
+        return self.driver.find_element(By.ID, "plan-supportive").is_selected()
 
-    def fill_confirmation_code(self, code):
-        self.driver.find_element(*self.CONFIRMATION_CODE_INPUT).clear()
-        self.driver.find_element(*self.CONFIRMATION_CODE_INPUT).send_keys(code)
+    def get_selected_plan(self) -> str:
+        selected = self.driver.find_element(By.CSS_SELECTOR, ".plan.selected")
+        return selected.text
 
-    def get_phone_number(self):
-        return self.driver.find_element(*self.PHONE_INPUT).get_attribute("value")
+    # --- Phone number flow ---
+    def fill_phone_number(self, phone_number: str) -> None:
+        phone_input = self.driver.find_element(By.ID, "phone-number")
+        phone_input.clear()
+        phone_input.send_keys(phone_number)
 
-    def fill_card(self, card_number, card_code):
-        self.driver.find_element(*self.CARD_NUMBER_INPUT).clear()
-        self.driver.find_element(*self.CARD_NUMBER_INPUT).send_keys(card_number)
-        self.driver.find_element(*self.CARD_CODE_INPUT).clear()
-        self.driver.find_element(*self.CARD_CODE_INPUT).send_keys(card_code)
+    def get_phone_number(self) -> str:
+        return self.driver.find_element(By.ID, "phone-number").get_attribute("value")
 
-    def click_link_card_button(self):
-        self.driver.find_element(*self.LINK_CARD_BUTTON).click()
+    def get_phone_confirmation_code(self) -> str:
+        """Retrieve confirmation code from Chrome performance logs."""
+        logs = self.driver.get_log("performance")
+        for entry in logs:
+            if "SMS_CODE" in entry["message"]:
+                # Example: "SMS_CODE=1234"
+                return entry["message"].split("SMS_CODE=")[1][:4]
+        return None
 
-    def is_card_linked(self, card_number):
-        # You may need to check a message or UI element that verifies card linking.
-        linked_card = self.driver.find_element(*self.CARD_NUMBER_INPUT).get_attribute("value")
-        return linked_card.endswith(card_number)
+    def fill_confirmation_code(self, code: str) -> None:
+        code_input = self.driver.find_element(By.ID, "confirmation-code")
+        code_input.clear()
+        code_input.send_keys(code)
 
+    # --- Card flow ---
+    def fill_card(self, number: str, code: str) -> None:
+        self.driver.find_element(By.ID, "card-number").send_keys(number)
+        self.driver.find_element(By.ID, "card-code").send_keys(code)
 
-    def get_address_from(self):
-        return self.driver.find_element(*self.ADDRESS_FROM_INPUT).get_attribute("value")
+    def press_tab(self) -> None:
+        ActionChains(self.driver).send_keys(Keys.TAB).perform()
 
-    def get_address_to(self):
-        return self.driver.find_element(*self.ADDRESS_TO_INPUT).get_attribute("value")
+    def click_link_card_button(self) -> None:
+        self.driver.find_element(By.ID, "link-card-button").click()
 
-    def choose_tariff(self, tariff_name):
-        selector = self.driver.find_element(*self.TARIFF_SELECTOR)
-        selector.send_keys(tariff_name)
+    def get_active_payment_method(self) -> str:
+        active = self.driver.find_element(By.CSS_SELECTOR, ".payment-method.active")
+        return active.text
 
-    def add_comment_for_driver(self, comment):
-        self.driver.find_element(*self.COMMENT_INPUT).clear()
-        self.driver.find_element(*self.COMMENT_INPUT).send_keys(comment)
+    # --- Comment for driver ---
+    def add_comment_for_driver(self, message: str) -> None:
+        comment_box = self.driver.find_element(By.ID, "driver-comment")
+        comment_box.clear()
+        comment_box.send_keys(message)
 
-    def get_comment_for_driver(self):
-        return self.driver.find_element(*self.COMMENT_INPUT).get_attribute("value")
+    def get_comment_for_driver(self) -> str:
+        return self.driver.find_element(By.ID, "driver-comment").get_attribute("value")
 
-    def order_blanket_and_handkerchiefs(self):
-        self.driver.find_element(*self.BLANKET_CHECKBOX).click()
-        self.driver.find_element(*self.HANDKERCHIEF_CHECKBOX).click()
+    # --- Extras (blanket, handkerchiefs, ice cream) ---
+    def order_blanket_and_handkerchiefs(self) -> None:
+        self.driver.find_element(By.ID, "order-blanket").click()
+        self.driver.find_element(By.ID, "order-handkerchief").click()
 
-    def is_blanket_ordered(self):
-        return self.driver.find_element(*self.BLANKET_CHECKBOX).is_selected()
+    def is_blanket_ordered(self) -> bool:
+        return self.driver.find_element(By.ID, "order-blanket").is_selected()
 
-    def is_handkerchief_ordered(self):
-        return self.driver.find_element(*self.HANDKERCHIEF_CHECKBOX).is_selected()
+    def is_handkerchief_ordered(self) -> bool:
+        return self.driver.find_element(By.ID, "order-handkerchief").is_selected()
 
-    def order_ice_creams(self, count=1):
-        ice_cream_input = self.driver.find_element(*self.ICE_CREAM_INPUT)
-        ice_cream_input.clear()
-        ice_cream_input.send_keys(str(count))
+    def order_ice_creams(self, count: int) -> None:
+        ice_input = self.driver.find_element(By.ID, "ice-cream-count")
+        ice_input.clear()
+        ice_input.send_keys(str(count))
 
-    def get_ice_cream_count(self):
-        return int(self.driver.find_element(*self.ICE_CREAM_INPUT).get_attribute("value"))
+    def get_ice_cream_count(self) -> int:
+        val = self.driver.find_element(By.ID, "ice-cream-count").get_attribute("value")
+        return int(val)
 
+    # --- Supportive taxi ordering ---
     def wait_for_car_search_modal(self):
-        # For real implementation, use WebDriverWait here.
-        return self.driver.find_element(*self.CAR_SEARCH_MODAL)
+        modal = self.wait.until(
+            EC.visibility_of_element_located((By.ID, "car-search-modal"))
+        )
+        return modal
 
-    def get_car_model_name(self):
-        return self.driver.find_element(*self.CAR_MODEL_NAME).text
+    def get_car_model_name(self) -> str:
+        return self.driver.find_element(By.ID, "car-model").text

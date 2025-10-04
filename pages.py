@@ -17,7 +17,7 @@ class UrbanRoutesPage:
     ADDRESS_TO_INPUT = (By.ID, "to")
     CALL_TAXI_BUTTON = (By.CSS_SELECTOR, ".button.round")
     SUPPORTIVE_PLAN_OPTION = (By.XPATH, "//div[contains(text(),'Supportive')]")
-    SELECTED_PLAN = (By.CSS_SELECTOR, "div.plan-item.selected")  # Confirm correct class in UI
+    SELECTED_PLAN = (By.XPATH,'//div[@class="tcard active"]//div[@class="tcard-title" and text()="Supportive"]')  # Confirm correct class in UI
     PHONE_MAIN_SELECT = (By.CLASS_NAME, 'np-button')
     PHONE_INPUT_FIELD = (By.ID, "phone")
     PHONE_NEXT_BUTTON = (By.CSS_SELECTOR, ".full")
@@ -48,12 +48,12 @@ class UrbanRoutesPage:
     # ---------------------------
     def fill_address_from(self, address):
         element = self.wait.until(EC.visibility_of_element_located(self.ADDRESS_FROM_INPUT))
-        element.clear()
+
         element.send_keys(address)
 
     def fill_address_to(self, address):
         element = self.wait.until(EC.visibility_of_element_located(self.ADDRESS_TO_INPUT))
-        element.clear()
+
         element.send_keys(address)
 
     def get_address_from(self):
@@ -73,9 +73,12 @@ class UrbanRoutesPage:
         plan = self.wait.until(EC.element_to_be_clickable(self.SUPPORTIVE_PLAN_OPTION))
         plan.click()
 
-    def get_selected_plan_name(self):
+    ''' def get_selected_plan_name(self):
         selected = self.wait.until(EC.visibility_of_element_located(self.SELECTED_PLAN))
-        return selected.text.strip()
+        return selected.text.strip()'''
+
+    def get_selected_plan_name(self):
+        return self.driver.find_element(*self.SELECTED_PLAN).text
 
     def is_supportive_plan_selected(self):
         return self.get_selected_plan_name() == "Supportive"
@@ -83,36 +86,36 @@ class UrbanRoutesPage:
     # ---------------------------
     # Phone + Confirmation
     # ---------------------------
-    def open_phone_dialog(self):
-        btn = self.wait.until(EC.element_to_be_clickable(self.PHONE_MAIN_SELECT))
+
+
+
+    def fill_phone_number(self, phone_number: str):
+        field = self.wait.until(EC.visibility_of_element_located(self.PHONE_INPUT_FIELD))
+        field.clear()
+        field.send_keys(phone_number)
+
+    def click_next_phone(self):
+        btn = self.wait.until(EC.element_to_be_clickable(self.PHONE_NEXT_BUTTON))
         btn.click()
 
-    def get_sms_code(self):
-        """Retrieve SMS code using helper that reads browser logs or other means."""
-        return helpers.retrieve_phone_code(self.driver)
-
-    def fill_phone_number_and_confirm(self, phone_number: str):
+    def confirm_code(self, phone_number: str):
         self.open_phone_dialog()
         self.fill_phone_number(phone_number)
         self.click_next_phone()
-        sms_code = self.get_sms_code()
-        self.fill_confirmation_code(sms_code)
-        self.click_confirm_phone()
-        actual_number = self.get_phone_number()
+        self.open_phone_dialog()
+        self.open_phone_dialog()
+        self.get_sms_code()
+        self.get_phone_number()
         assert actual_number == phone_number, f"Expected phone {phone_number} but got {actual_number}"
 
     def fill_confirmation_code(self, code: str):
         code_input = self.wait.until(EC.visibility_of_element_located(self.CONFIRMATION_CODE_INPUT))
-        code_input.clear()
+
         code_input.send_keys(code)
 
     def click_confirm_phone(self):
         confirm_btn = self.wait.until(EC.element_to_be_clickable(self.PHONE_CONFIRM_BUTTON))
         confirm_btn.click()
-    def fill_confirmation_code(self, code):
-            code_input = self.wait.until(EC.visibility_of_element_located(self.CONFIRMATION_CODE_INPUT))
-            code_input.clear()
-            code_input.send_keys(code)
 
     # ---------------------------
     # Card Payment

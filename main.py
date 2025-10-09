@@ -1,6 +1,6 @@
 import pytest
 import time
-from pages import UrbanRoutesPage, UrbanRoutesPageLocators
+from pages import UrbanRoutesPage
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
 import data

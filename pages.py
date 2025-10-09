@@ -41,7 +41,7 @@ class UrbanRoutesPage:
     # ---------------------------
     def open_payment_section(self):
         """Open the payment section."""
-        self.driver.find_element(*UrbanRoutesPageLocators.PAYMENT_SECTION).click()
+        self.driver.find_element(*UrbanRoutesPage.PAYMENT_SECTION).click()
 
     def add_card(self, card_number, card_code):
         """Add a payment card, wrapping add_new_card if it exists."""
@@ -52,7 +52,7 @@ class UrbanRoutesPage:
 
     def get_active_payment_method(self):
         """Return the currently active payment method displayed on the page."""
-        payment_element = self.driver.find_element(*UrbanRoutesPageLocators.ACTIVE_PAYMENT_METHOD)
+        payment_element = self.driver.find_element(*UrbanRoutesPage.ACTIVE_PAYMENT_METHOD)
         return payment_element.text
 
     # ---------------------------
@@ -60,25 +60,25 @@ class UrbanRoutesPage:
     # ---------------------------
     def toggle_blanket(self):
         """Toggle the blanket checkbox."""
-        self.driver.find_element(*UrbanRoutesPageLocators.BLANKET_CHECKBOX).click()
+        self.driver.find_element(*UrbanRoutesPage.BLANKET_CHECKBOX).click()
 
     def toggle_handkerchief(self):
         """Toggle the handkerchief checkbox."""
-        self.driver.find_element(*UrbanRoutesPageLocators.HANDKERCHIEF_CHECKBOX).click()
+        self.driver.find_element(*UrbanRoutesPage.HANDKERCHIEF_CHECKBOX).click()
 
     # ---------------------------
     # Phone Methods
     # ---------------------------
     def confirm_phone(self, phone_number):
         """Enter phone number and confirm it."""
-        input_field = self.driver.find_element(*UrbanRoutesPageLocators.PHONE_INPUT)
+        input_field = self.driver.find_element(*UrbanRoutesPage.PHONE_INPUT)
         input_field.clear()
         input_field.send_keys(phone_number)
-        self.driver.find_element(*UrbanRoutesPageLocators.CONFIRM_PHONE_BUTTON).click()
+        self.driver.find_element(*UrbanRoutesPage.CONFIRM_PHONE_BUTTON).click()
 
     def get_entered_phone_text(self):
         """Return the current value of the phone input."""
-        return self.driver.find_element(*UrbanRoutesPageLocators.PHONE_INPUT).get_attribute("value")
+        return self.driver.find_element(*UrbanRoutesPage.PHONE_INPUT).get_attribute("value")
 
     # ---------------------------
     # Ice Cream Methods
@@ -86,11 +86,11 @@ class UrbanRoutesPage:
     def add_ice_cream(self, count=2):
         """Add a specified number of ice creams to the order."""
         for _ in range(count):
-            self.driver.find_element(*UrbanRoutesPageLocators.ICE_CREAM_PLUS_BUTTON).click()
+            self.driver.find_element(*UrbanRoutesPage.ICE_CREAM_PLUS_BUTTON).click()
 
     def get_ice_cream_count(self):
         """Return the number of ice creams currently added to the order."""
-        count_element = self.driver.find_element(*UrbanRoutesPageLocators.ICE_CREAM_COUNT)
+        count_element = self.driver.find_element(*UrbanRoutesPage.ICE_CREAM_COUNT)
         return int(count_element.text)
 
     # ---------------------------
@@ -98,8 +98,8 @@ class UrbanRoutesPage:
     # ---------------------------
     def enter_addresses(self, from_address, to_address):
         """Enter the 'From' and 'To' addresses."""
-        from_input = self.driver.find_element(*UrbanRoutesPageLocators.ADDRESS_FROM_INPUT)
-        to_input = self.driver.find_element(*UrbanRoutesPageLocators.ADDRESS_TO_INPUT)
+        from_input = self.driver.find_element(*UrbanRoutesPage.ADDRESS_FROM_INPUT)
+        to_input = self.driver.find_element(*UrbanRoutesPage.ADDRESS_TO_INPUT)
 
         from_input.clear()
         from_input.send_keys(from_address)
@@ -112,5 +112,5 @@ class UrbanRoutesPage:
     # ---------------------------
     def get_selected_plan_name(self):
         """Return the name of the currently selected supportive plan."""
-        plan_element = self.driver.find_element(*UrbanRoutesPageLocators.SELECTED_PLAN_NAME)
+        plan_element = self.driver.find_element(*UrbanRoutesPage.SELECTED_PLAN_NAME)
         return plan_element.text

@@ -1,8 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from helpers import retrieve_phone_code
-
+from selenium.webdriver.support import expected_conditions as EC
 
 # ---------------------------
 # Locator Class
@@ -46,8 +45,7 @@ class UrbanRoutesPage:
 
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(driver, 10)
-
+        self.wait = WebDriverWait(driver, 10)  # This line is probably missing
     # ---------------------------
     # Payment Methods
     # ---------------------------
@@ -121,14 +119,13 @@ class UrbanRoutesPage:
     # ---------------------------
     # Route / Address Methods
     # ---------------------------
+
     def enter_addresses(self, from_address, to_address):
         from_input = self.wait.until(EC.presence_of_element_located(UrbanRoutesPageLocators.ADDRESS_FROM_INPUT))
         to_input = self.wait.until(EC.presence_of_element_located(UrbanRoutesPageLocators.ADDRESS_TO_INPUT))
-
-        from_input.clear()
         from_input.send_keys(from_address)
-        to_input.clear()
         to_input.send_keys(to_address)
+
 
     # ---------------------------
     # Supportive Plan Methods

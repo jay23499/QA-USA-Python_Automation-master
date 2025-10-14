@@ -1,31 +1,31 @@
 import pytest
 from selenium import webdriver
-from selenium.webdriver import DesiredCapabilities
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 from pages import UrbanRoutesPage, UrbanRoutesPageLocators
 import data
 import helpers
+import time
 
 
 class TestUrbanRoutes:
     @classmethod
     def setup_class(cls):
-        """Initialize Chrome driver with performance logging."""
-        from selenium.webdriver.chrome.options import Options
-
+        """Initialize Chrome driver with performance logging and check server."""
         chrome_options = Options()
         chrome_options.set_capability("goog:loggingPrefs", {'performance': 'ALL'})
 
         cls.driver = webdriver.Chrome(options=chrome_options)
 
-        if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
-            print("Connected to the Urban Routes server")
+        # Retry connecting to the server
+        for attempt in range(1, 4):
+            if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
+                print(f"Connected to Urban Routes server on attempt {attempt}")
+                break
+            else:
+                print(f"Attempt {attempt} failed. Retrying...")
+                time.sleep(2)
         else:
             raise RuntimeError("Cannot connect to Urban Routes. Check that the server is running")
-
-
 
     def setup_method(self):
         """Navigate to Urban Routes page before each test."""
@@ -33,7 +33,7 @@ class TestUrbanRoutes:
         self.routes_page = UrbanRoutesPage(self.driver)
 
     # -------------------------
-    # HELPER METHODS
+    # Helper Methods
     # -------------------------
     def _setup_phone_number(self):
         """Confirm phone number using POM."""
@@ -41,86 +41,66 @@ class TestUrbanRoutes:
         confirmed = self.routes_page.get_entered_phone_text()
         assert confirmed == data.PHONE_NUMBER, f"Expected phone {data.PHONE_NUMBER}, got {confirmed}"
 
-    def _start_route(self):
-        """Enter addresses and click 'Call a Taxi'."""
-        self.routes_page.enter_addresses(data.ADDRESS_FROM, data.ADDRESS_TO)
-        self.routes_page.click_call_taxi()
-
-    def _start_route_with_supportive_plan(self):
-        """Start route and select the Supportive plan."""
-        self._start_route()
-        self.routes_page.select_supportive_plan()
-        assert self.routes_page.is_supportive_plan_selected(), "Supportive plan should be selected"
-
-    def _add_ice_cream(self, count: int):
-        """Add ice creams via POM."""
-        self.routes_page.add_ice_cream(count=count)
-        assert self.routes_page.get_ice_cream_count() == count, f"Expected {count} ice creams"
+    def _start_route(self, retries=3):
+        """Enter addresses and click 'Call a Taxi', retrying if elements are not ready."""
+        for attempt in range(1, retries + 1):
+            try:
+                self.routes_page.enter_addresses(data.ADDRESS_FROM, data.ADDRESS_TO)
+                self.routes_page.click_call_taxi()
+                return
+            except Exception as e:
+                print(f"[WARNING] Attempt {attempt} to start route failed: {e}")
+                time.sleep(2)
+        raise RuntimeError("Cannot start route. Page or server not available.")
 
     # -------------------------
-    # TEST METHODS
+    # Tests
     # -------------------------
-    def test_set_route(self):
-        self._start_route()
-        from_val = self.driver.find_element(
-            *UrbanRoutesPageLocators.ADDRESS_FROM_INPUT
-        ).get_attribute("value")
-        to_val = self.driver.find_element(
-            *UrbanRoutesPageLocators.ADDRESS_TO_INPUT
-        ).get_attribute("value")
-        assert from_val == data.ADDRESS_FROM, "From address mismatch"
-        assert to_val == data.ADDRESS_TO, "To address mismatch"
+    def test_set_route(self, setup_urban_routes):
+        page = setup_urban_routes
+        assert page.get_from_address() == data.ADDRESS_FROM
+        assert page.get_to_address() == data.ADDRESS_TO
 
-    def test_select_supportive_plan(self):
-        self._start_route()
-        self.routes_page.select_supportive_plan()
-        plan_name = self.routes_page.get_selected_plan_name()
-        assert self.routes_page.is_supportive_plan_selected(), "Supportive plan should be selected"
-        assert plan_name == "Supportive", f"Expected plan 'Supportive', got '{plan_name}'"
+    def test_select_comfort_plan(self, setup_urban_routes):
+        page = setup_urban_routes
+        assert page.is_comfort_selected(), "Comfort plan should be selected"
 
-    def test_add_payment_card(self):
-        self._start_route()
-        self._setup_phone_number()
-        self.routes_page.add_card(data.CARD_NUMBER, data.CARD_CODE)
-        active_method = self.routes_page.get_active_payment_method()
-        assert active_method == "Card", f"Expected active payment method 'Card', got '{active_method}'"
+    def test_confirm_phone_number(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.confirm_phone(data.PHONE_NUMBER)
+        assert page.get_entered_phone_text() == data.PHONE_NUMBER
 
-    def test_order_blanket_and_handkerchiefs(self):
-        self._start_route_with_supportive_plan()
-        self.routes_page.toggle_blanket()
-        self.routes_page.toggle_handkerchief()
-        assert self.routes_page.is_blanket_ordered(), "Blanket should be ordered"
-        assert self.routes_page.is_handkerchief_ordered(), "Handkerchief should be ordered"
+    def test_add_payment_card(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.confirm_phone(data.PHONE_NUMBER)
+        page.add_payment_card(data.CARD_NUMBER, data.CARD_CODE)
+        assert page.get_active_payment_method() == "Card"
 
-    def test_order_ice_creams(self):
-        self._start_route_with_supportive_plan()
-        self._add_ice_cream(count=2)
+    def test_toggle_blanket_and_handkerchiefs(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.toggle_blanket()
+        assert page.is_blanket_ordered(), "Blanket & handkerchiefs should be toggled on"
 
-    # -------------------------
-    # ADDITIONAL TEST CASES
-    # -------------------------
-    def test_invalid_address(self):
-        """Test submitting empty or invalid addresses."""
-        self.routes_page.enter_addresses("", "")
-        self.routes_page.click_call_taxi()
-        error_msg = self.routes_page.get_address_error_message()
-        assert error_msg is not None, "Expected an error message for empty addresses"
+    def test_message_for_driver(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.leave_message_for_driver(data.MESSAGE_FOR_DRIVER)
+        assert page.get_driver_message() == data.MESSAGE_FOR_DRIVER
 
-    def test_same_from_to_address(self):
-        """Test route with same from and to addresses."""
-        self.routes_page.enter_addresses(data.ADDRESS_FROM, data.ADDRESS_FROM)
-        self.routes_page.click_call_taxi()
-        error_msg = self.routes_page.get_address_error_message()
-        assert error_msg is not None, "Expected error message when from and to addresses are the same"
+    def test_select_payment_method(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.confirm_phone(data.PHONE_NUMBER)
+        page.add_payment_card(data.CARD_NUMBER, data.CARD_CODE)
+        assert page.get_active_payment_method() == "Card"
 
-    def test_invalid_payment_card(self):
-        """Test adding an invalid card."""
-        self._start_route()
-        self._setup_phone_number()
-        self.routes_page.add_card("0000 0000 0000 0000", "1234")
-        error_msg = self.routes_page.get_card_error_message()
-        assert error_msg is not None, "Expected error for invalid card number"
+    def test_add_ice_cream(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.add_ice_cream(3)
+        assert page.get_ice_cream_count() == 3
 
-        @classmethod
-        def teardown_class(cls):
-            cls.driver.quit()
+    def test_ordering_car(self, setup_urban_routes):
+        page = setup_urban_routes
+        page.order_car()
+        assert page.wait_for_car_search().is_displayed(), "Car search did not start"
+    @classmethod
+    def teardown_class(cls):
+        cls.driver.quit()

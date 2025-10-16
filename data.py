@@ -3,7 +3,7 @@
 # ---------------------------
 # URLs
 # ---------------------------
-URBAN_ROUTES_URL = 'https://cnt-b5f9b20e-c690-44ab-a4e5-dcdd386030cb.containerhub.tripleten-services.com/'
+URBAN_ROUTES_URL = 'https://cnt-99dd97fb-d171-4f4a-809f-31bcee2e73e0.containerhub.tripleten-services.com/'
 
 # ---------------------------
 # Addresses

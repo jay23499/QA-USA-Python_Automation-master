@@ -30,7 +30,6 @@ def retrieve_phone_code(driver: WebDriver) -> str:
     Raises:
         Exception: If no phone confirmation code was found within 10 attempts.
     """
-
     code = None
     for i in range(10):
         try:
@@ -45,15 +44,19 @@ def retrieve_phone_code(driver: WebDriver) -> str:
                     'Network.getResponseBody',
                     {'requestId': message_data["params"]["requestId"]}
                 )
-                code = ''.join([x for x in body['body'] if x.isdigit()])
-        except WebDriverException:
+                code = ''.join(filter(str.isdigit, body['body']))  # cleaner extraction
+
+            if code:
+                logger.info(f"Phone confirmation code found: {code}")
+                return code
+
+        except WebDriverException as e:
+            logger.debug(f"WebDriverException encountered: {e}")
             time.sleep(1)
             continue
 
-        if code:
-            return code
-        else:
-            time.sleep(1)  # wait before retrying
+        logger.debug(f"Attempt {i+1}: code not found, retrying...")
+        time.sleep(1)
 
     # If code was never found
     raise Exception(
@@ -65,7 +68,7 @@ def retrieve_phone_code(driver: WebDriver) -> str:
 # ---------------------------
 # Checks if Routes is up and running
 # ---------------------------
-def is_url_reachable(url: str) -> bool:
+def is_url_reachable(url: str, timeout: int = 5) -> bool:
     """Check if a given URL is reachable (status code 200).
 
     This helper is primarily used to verify that the Urban Routes
@@ -73,6 +76,7 @@ def is_url_reachable(url: str) -> bool:
 
     Args:
         url (str): The target URL to check.
+        timeout (int): Optional timeout in seconds for the request (default 5).
 
     Returns:
         bool: True if reachable, False otherwise.
@@ -82,8 +86,14 @@ def is_url_reachable(url: str) -> bool:
         ssl_ctx.check_hostname = False
         ssl_ctx.verify_mode = ssl.CERT_NONE
 
-        with urllib.request.urlopen(url, context=ssl_ctx) as response:
-            return response.status == 200
+        with urllib.request.urlopen(url, context=ssl_ctx, timeout=timeout) as response:
+            reachable = response.status == 200
+            if reachable:
+                logger.info(f"URL reachable: {url}")
+            else:
+                logger.warning(f"URL responded but status code not 200: {response.status}")
+            return reachable
+
     except Exception as e:
         logger.warning(f"URL not reachable: {e}")
         return False

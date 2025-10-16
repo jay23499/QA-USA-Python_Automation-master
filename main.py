@@ -55,16 +55,40 @@ class TestUrbanRoutes:
     # -------------------------
     # Tests
     # -------------------------
-    def test_set_route(self):
-        self._start_route()
-        assert self.routes_page.get_from_address() == data.ADDRESS_FROM
-        assert self.routes_page.get_to_address() == data.ADDRESS_TO
+    def test_set_route(self, route_set):
+        assert route_set.get_from_address() == data.ADDRESS_FROM
+        assert route_set.get_to_address() == data.ADDRESS_TO
 
-    def test_select_comfort_plan(self):
-        self._start_route()
-        self.routes_page.choose_comfort_class()
-        assert self.routes_page.is_comfort_selected(), "Comfort plan should be selected"
+    def test_select_comfort_plan(self, route_set):
+        route_set.choose_comfort_class()
+        assert route_set.is_comfort_selected(), "Comfort plan should be selected"
 
-    def test_confirm_phone_number(self):
-        self.routes_page.confirm_phone(data.PHONE_NUMBER)
-        assert self.routes_page
+    def test_confirm_phone_number(self, phone_confirmed):
+        # phone_confirmed fixture already asserts the number
+        pass
+
+    def test_add_payment_card(self, phone_confirmed):
+        phone_confirmed.add_payment_card(data.CARD_NUMBER, data.CARD_CODE)
+        assert phone_confirmed.get_active_payment_method() == "Card"
+
+    def test_toggle_blanket_and_handkerchiefs(self, routes_page):
+        routes_page.toggle_blanket()
+        assert routes_page.is_blanket_ordered(), "Blanket & handkerchiefs should be toggled on"
+
+    def test_message_for_driver(self, routes_page):
+        routes_page.leave_message_for_driver(data.MESSAGE_FOR_DRIVER)
+        assert routes_page.get_driver_message() == data.MESSAGE_FOR_DRIVER
+
+
+    def test_add_ice_cream(self, routes_page, count):
+        routes_page.add_ice_cream(count)
+        assert routes_page.get_ice_cream_count() == count
+
+    def test_ordering_car(self, route_set):
+        route_set.order_car()
+        search_element = route_set.wait_for_car_search()
+        assert search_element.is_displayed(), "Car search did not start"
+
+    @classmethod
+    def teardown_class(cls):
+        cls.driver.quit()

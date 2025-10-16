@@ -1,16 +1,35 @@
 # helpers.py
+import json
+import time
+import ssl
+import urllib.request
+import logging
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.common import WebDriverException
+
+# Configure a basic logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # ---------------------------
 # Retrieves Phone code. Do not change main logic
 # ---------------------------
-def retrieve_phone_code(driver) -> str:
-    """This code retrieves phone confirmation number and returns it as a string.
-    Use it when application waits for the confirmation code to pass it into your tests.
-    The phone confirmation code can only be obtained after it was requested in application."""
+def retrieve_phone_code(driver: WebDriver) -> str:
+    """Retrieve the phone confirmation code from browser network logs.
 
-    import json
-    import time
-    from selenium.common import WebDriverException
+    This function parses the Chrome DevTools performance logs to extract
+    the phone verification code after it has been requested in the app.
+
+    Args:
+        driver (WebDriver): Selenium WebDriver instance with performance logging enabled.
+
+    Returns:
+        str: Extracted numeric confirmation code.
+
+    Raises:
+        Exception: If no phone confirmation code was found within 10 attempts.
+    """
 
     code = None
     for i in range(10):
@@ -46,12 +65,18 @@ def retrieve_phone_code(driver) -> str:
 # ---------------------------
 # Checks if Routes is up and running
 # ---------------------------
-def is_url_reachable(url) -> bool:
-    """Check if the URL can be reached. Returns True if reachable, False otherwise."""
+def is_url_reachable(url: str) -> bool:
+    """Check if a given URL is reachable (status code 200).
 
-    import ssl
-    import urllib.request
+    This helper is primarily used to verify that the Urban Routes
+    application server is up before running tests.
 
+    Args:
+        url (str): The target URL to check.
+
+    Returns:
+        bool: True if reachable, False otherwise.
+    """
     try:
         ssl_ctx = ssl.create_default_context()
         ssl_ctx.check_hostname = False
@@ -60,5 +85,5 @@ def is_url_reachable(url) -> bool:
         with urllib.request.urlopen(url, context=ssl_ctx) as response:
             return response.status == 200
     except Exception as e:
-        print(f"[WARNING] URL not reachable: {e}")
+        logger.warning(f"URL not reachable: {e}")
         return False

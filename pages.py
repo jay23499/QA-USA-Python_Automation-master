@@ -33,24 +33,33 @@ class UrbanRoutesPage:
     # -------------------------
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(driver, 10)
+        self.wait = WebDriverWait(driver, 10)  # 10 seconds timeout
 
     # -------------------------
     # Page Methods
     # -------------------------
     def confirm_phone(self, phone_number):
-        self.wait.until(EC.visibility_of_element_located(self.PHONE_INPUT)).send_keys(phone_number)
-        self.driver.find_element(*self.PHONE_CONFIRM_BTN).click()
+        input_field = self.wait.until(EC.visibility_of_element_located(self.PHONE_INPUT))
+        input_field.clear()
+        input_field.send_keys(phone_number)
+        btn = self.wait.until(EC.element_to_be_clickable(self.PHONE_CONFIRM_BTN))
+        btn.click()
 
     def get_entered_phone_text(self):
         return self.driver.find_element(*self.PHONE_INPUT).get_attribute("value")
 
     def enter_addresses(self, from_addr, to_addr):
-        self.wait.until(EC.visibility_of_element_located(self.FROM_ADDRESS_INPUT)).send_keys(from_addr)
-        self.driver.find_element(*self.TO_ADDRESS_INPUT).send_keys(to_addr)
+        from_input = self.wait.until(EC.visibility_of_element_located(self.FROM_ADDRESS_INPUT))
+
+        from_input.send_keys(from_addr)
+
+        to_input = self.wait.until(EC.visibility_of_element_located(self.TO_ADDRESS_INPUT))
+        to_input.clear()
+        to_input.send_keys(to_addr)
 
     def click_call_taxi(self):
-        self.driver.find_element(*self.CALL_TAXI_BTN).click()
+        btn = self.wait.until(EC.element_to_be_clickable(self.CALL_TAXI_BTN))
+        btn.click()
 
     def get_from_address(self):
         return self.driver.find_element(*self.FROM_ADDRESS_INPUT).get_attribute("value")
@@ -59,42 +68,53 @@ class UrbanRoutesPage:
         return self.driver.find_element(*self.TO_ADDRESS_INPUT).get_attribute("value")
 
     def choose_comfort_class(self):
-        self.driver.find_element(*self.COMFORT_PLAN_BTN).click()
+        btn = self.wait.until(EC.element_to_be_clickable(self.COMFORT_PLAN_BTN))
+        btn.click()
 
     def is_comfort_selected(self):
         return bool(self.driver.find_elements(*self.COMFORT_SELECTED))
 
     def add_payment_card(self, number, code):
-        self.driver.find_element(*self.PAYMENT_CARD_INPUT).send_keys(number)
-        self.driver.find_element(*self.PAYMENT_CODE_INPUT).send_keys(code)
-        self.driver.find_element(*self.ADD_CARD_BTN).click()
+        card_input = self.wait.until(EC.visibility_of_element_located(self.PAYMENT_CARD_INPUT))
+        card_input.clear()
+        card_input.send_keys(number)
+        code_input = self.wait.until(EC.visibility_of_element_located(self.PAYMENT_CODE_INPUT))
+        code_input.clear()
+        code_input.send_keys(code)
+        btn = self.wait.until(EC.element_to_be_clickable(self.ADD_CARD_BTN))
+        btn.click()
 
     def get_active_payment_method(self):
         return self.driver.find_element(*self.ACTIVE_PAYMENT_METHOD).text
 
     def toggle_blanket(self):
-        self.driver.find_element(*self.BLANKET_TOGGLE).click()
+        btn = self.wait.until(EC.element_to_be_clickable(self.BLANKET_TOGGLE))
+        btn.click()
 
     def is_blanket_ordered(self):
         return bool(self.driver.find_elements(*self.BLANKET_ORDERED))
 
     def leave_message_for_driver(self, message):
-        self.driver.find_element(*self.DRIVER_MESSAGE_INPUT).send_keys(message)
+        msg_input = self.wait.until(EC.visibility_of_element_located(self.DRIVER_MESSAGE_INPUT))
+        msg_input.clear()
+        msg_input.send_keys(message)
 
     def get_driver_message(self):
         return self.driver.find_element(*self.DRIVER_MESSAGE_INPUT).get_attribute("value")
 
     def add_ice_cream(self, count):
-        qty_input = self.driver.find_element(*self.ICE_CREAM_QTY_INPUT)
+        qty_input = self.wait.until(EC.visibility_of_element_located(self.ICE_CREAM_QTY_INPUT))
         qty_input.clear()
         qty_input.send_keys(str(count))
-        self.driver.find_element(*self.ICE_CREAM_ADD_BTN).click()
+        btn = self.wait.until(EC.element_to_be_clickable(self.ICE_CREAM_ADD_BTN))
+        btn.click()
 
     def get_ice_cream_count(self):
         return int(self.driver.find_element(*self.ICE_CREAM_COUNT).text)
 
     def order_car(self):
-        self.driver.find_element(*self.ORDER_CAR_BTN).click()
+        btn = self.wait.until(EC.element_to_be_clickable(self.ORDER_CAR_BTN))
+        btn.click()
 
     def wait_for_car_search(self):
         return self.wait.until(EC.visibility_of_element_located(self.CAR_SEARCH_INDICATOR))

@@ -1,9 +1,11 @@
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from helpers import retrieve_phone_code
 
 
-class UrbanRoutePage:
+class UrbanRoutesPage:
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
@@ -43,12 +45,8 @@ class UrbanRoutePage:
 
     # --- METHODS ---
     def enter_addresses(self, from_addr, to_addr):
-        from_field = self.wait.until(EC.visibility_of_element_located(self.FROM_ADDRESS_INPUT))
-        from_field.clear()
-        from_field.send_keys(from_addr)
-        to_field = self.wait.until(EC.visibility_of_element_located(self.TO_ADDRESS_INPUT))
-        to_field.clear()
-        to_field.send_keys(to_addr)
+        self.driver.find_element(*self.FROM_ADDRESS_INPUT).send_keys(from_addr)
+        self.driver.find_element(*self.TO_ADDRESS_INPUT).send_keys(to_addr)
 
     def get_from_address(self):
         return self.driver.find_element(*self.FROM_ADDRESS_INPUT).get_attribute("value")

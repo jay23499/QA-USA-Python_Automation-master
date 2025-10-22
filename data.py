@@ -1,27 +1,8 @@
-# data.py
-
-# ---------------------------
-# URLs
-# ---------------------------
-URBAN_ROUTES_URL = 'https://cnt-c8187932-69f3-46ac-b5d0-3b4700fc8920.containerhub.tripleten-services.com/'
-# ---------------------------
-# Addresses
-# ---------------------------
+# --- TEST DATA ---
+URBAN_ROUTES_URL = "https://cnt-c8d17436-e94d-40bc-a7b1-2733af0b8357.containerhub.tripleten-services.com"
 ADDRESS_FROM = "East 2nd Street, 601"
 ADDRESS_TO = "1300 1st St"
-
-# ---------------------------
-# Phone
-# ---------------------------
-PHONE_NUMBER = "+1 213 313 72 12"
-
-# ---------------------------
-# Payment
-# ---------------------------
+PHONE_NUMBER = "+1 123 123 72 12"
 CARD_NUMBER = "1234 5678 9100 1234"
-CARD_CODE = "4884"
-
-# ---------------------------
-# Messages
-# ---------------------------
-MESSAGE_FOR_DRIVER = "Stop at the icecream bar, please"
+CARD_CODE = "1111"
+MESSAGE_FOR_DRIVER = "Stop at the juice bar, please"

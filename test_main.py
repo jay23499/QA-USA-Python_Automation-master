@@ -1,4 +1,5 @@
 import data
+import time
 import helpers
 from helpers import retrieve_phone_code
 from selenium import webdriver
@@ -9,7 +10,6 @@ class TestUrbanRoutes:
 
     @classmethod
     def setup_class(cls):
-        # do not modify - we need additional logging enabled in order to retrieve phone confirmation code
         from selenium.webdriver import DesiredCapabilities
         capabilities = DesiredCapabilities.CHROME
         capabilities["goog:loggingPrefs"] = {'performance': 'ALL'}
@@ -72,15 +72,15 @@ class TestUrbanRoutes:
     def test_add_payment_card(self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
-        self.setup_route_and_phone(page, data.PHONE_NUMBER)
+        page.enter_addresses(data.ADDRESS_FROM, data.ADDRESS_TO)
+        page.click_taxi()
+        page.choose_supportive_class()
         page.add_new_card(data.CARD_NUMBER, data.CARD_CODE)
         assert "Card" in page.get_active_payment_method()
-
     def test_toggle_blanket_and_handkerchiefs(self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
         self.setup_route_and_phone(page, data.PHONE_NUMBER)
-        page.open_extras_panel()  # Ensure extras are visible
         page.toggle_blanket()
         assert page.is_blanket_ordered()
 
@@ -88,24 +88,26 @@ class TestUrbanRoutes:
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
         self.setup_route_and_phone(page, data.PHONE_NUMBER)
-
         page.leave_message_for_driver(data.MESSAGE_FOR_DRIVER)
         assert page.get_driver_message() == data.MESSAGE_FOR_DRIVER
 
     def test_add_ice_cream(self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
-        self.setup_route_and_phone(page, data.PHONE_NUMBER)
+        page.enter_addresses(data.ADDRESS_FROM, data.ADDRESS_TO)  # Use same method as working test
+        page.click_taxi()  # Use same method name as working test
+        page.choose_supportive_class()
+
+        # Add a small wait to ensure UI updates
+        time.sleep(2)
 
         page.add_ice_cream(2)
-        WebDriverWait(self.driver, 10).until(lambda d: page.get_ice_cream_count() == 2)
         assert page.get_ice_cream_count() == 2
 
     def test_ordering_car(self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
         self.setup_route_and_phone(page, data.PHONE_NUMBER)
-
         page.leave_message_for_driver(data.MESSAGE_FOR_DRIVER)
         page.call_taxi()
         search_element = page.wait_for_car_search()

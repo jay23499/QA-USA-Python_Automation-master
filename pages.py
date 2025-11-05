@@ -9,10 +9,9 @@ class UrbanRoutesPage:
     # ------------------ Locators ------------------
     FROM_LOCATOR = (By.ID, 'from')
     TO_LOCATOR = (By.ID, 'to')
-    CALL_A_TAXI_BUTTON = (By.XPATH, "//button[contains(., 'Call a taxi')]")
+    CALL_A_TAXI_BUTTON = (By.CSS_SELECTOR, '.button.round')
     SUPPORTIVE_PLAN_LOCATOR = (By.XPATH, '//div[@class="tcard"][4]')
     ACTIVE_PLAN_LOCATOR = (By.XPATH, "//div[contains(@class, 'tcard active')]//div[@class='tcard-title']")
-
     PHONE_NUMBER_LOCATOR = (By.CSS_SELECTOR, '.np-button .np-text')
     PHONE_INPUT_CONTAINER = (By.CSS_SELECTOR, '#phone')
     NEXT_BUTTON_LOCATOR = (By.XPATH, "//button[text()='Next']")
@@ -20,6 +19,7 @@ class UrbanRoutesPage:
     CONFIRM_BUTTON_LOCATOR = (By.XPATH, "//button[text()='Confirm']")
     SEND_SMS_BUTTON = (By.XPATH, "//button[contains(text(),'Send code') or contains(text(),'Send SMS') or contains(text(),'Confirm')]")
 
+    # Payment locators
     PAYMENT_METHOD_LOCATOR = (By.CSS_SELECTOR, ".pp-button .pp-text")
     NEW_PAYMENT_METHOD = (By.XPATH, '//div[@class="pp-title" and text()="Card"]')
     ADD_CARD_LOCATOR = (By.XPATH, "//div[text()='Add card']")
@@ -28,16 +28,18 @@ class UrbanRoutesPage:
     LINK_BUTTON = (By.XPATH, "//button[text()='Link']")
     ADDED_CARD_LOCATOR = (By.XPATH, "//div[contains(@class,'card-item') and contains(text(),'••••')]")
     SELECT_CARD_BUTTON = (By.XPATH, "//div[contains(text(),'••••')]/ancestor::div[contains(@class,'card-item')]")
+    SAVE_CARD_BUTTON = (By.XPATH, "//button[text()='Save']")  # if needed in your flow
 
-    EXTRAS_PANEL_LOCATOR = (By.CSS_SELECTOR, ".extras-panel")
+    # Extras locators
     BLANKET_SWITCH = (By.XPATH, '(//span[@class="slider round"])[1]')
     BLANKET_INPUT = (By.XPATH, '(//input[@type="checkbox" and @class="switch-input"])[1]')
     COMMENT_FIELD = (By.XPATH, "//div[@class='input-container']/input[@id='comment']")
     ICE_CREAM_COUNT = (By.CSS_SELECTOR, ".counter-value")
-    ADD_ICE_CREAM = (By.XPATH, "//div[@class='r-counter-label' and normalize-space()='Ice cream']/following-sibling::div[contains(@class,'r-sw-counter')]//div[@class='counter-plus']")
+    ADD_ICE_CREAM = (By.XPATH, "//div[@class='counter-plus'][1]")
 
-    ORDER_BUTTON = (By.CSS_SELECTOR, '.smart-button')
-    CAR_SEARCH_MODAL = (By.CSS_SELECTOR, '.order-body')
+    # Ordering locators
+    ORDER_BUTTON_LOCATOR = (By.CSS_SELECTOR, '.smart-button')
+    CAR_SEARCH_MODAL_LOCATOR = (By.CSS_SELECTOR, '.order-body')
 
     # ------------------ Initialization ------------------
     def __init__(self, driver):
@@ -89,26 +91,34 @@ class UrbanRoutesPage:
     def get_entered_phone_text(self):
         return self.wait.until(EC.visibility_of_element_located(self.PHONE_NUMBER_LOCATOR)).text
 
+
+    # ------------------ Payment ------------------
     # ------------------ Payment ------------------
     def open_payment_methods(self):
+        """Opens the payment methods section."""
         self.driver.find_element(*self.PAYMENT_METHOD_LOCATOR).click()
 
-    def add_new_card(self, card_number, card_code):
-        self.open_payment_methods()
-        self.select_add_card()
-        self.add_payment_card(card_number, card_code)
-
     def select_add_card(self):
+        """Clicks the 'Add card' button."""
         self.driver.find_element(*self.ADD_CARD_LOCATOR).click()
 
     def add_payment_card(self, card_number, card_code):
+        """Enters card details and links the card."""
         self.wait.until(EC.visibility_of_element_located(self.CARD_NUMBER_FIELD)).send_keys(card_number)
         self.driver.find_element(*self.CARD_CODE_FIELD).send_keys(card_code)
         self.driver.find_element(*self.CARD_CODE_FIELD).send_keys(Keys.TAB)
         self.driver.find_element(*self.LINK_BUTTON).click()
 
+    def add_new_card(self, card_number, card_code):
+        """Orchestrates the process of adding a new card."""
+        self.open_payment_methods()
+        self.select_add_card()
+        self.add_payment_card(card_number, card_code)
+
     def get_active_payment_method(self):
+        """Returns the currently active payment method text."""
         return self.wait.until(EC.visibility_of_element_located(self.NEW_PAYMENT_METHOD)).text
+
     # ------------------ Extras ------------------
     def toggle_blanket(self):
         self.driver.find_element(*self.BLANKET_SWITCH).click()
@@ -120,18 +130,18 @@ class UrbanRoutesPage:
         self.driver.find_element(*self.COMMENT_FIELD).send_keys(message)
 
     def get_driver_message(self):
-        return self.driver.find_element(*self.COMMENT_FIELD).get_attribute("value")
+        return self.driver.find_element(*self.COMMENT_FIELD).get_attribute('value')
 
     def add_ice_cream(self, count):
-        add_button = self.wait.until(EC.element_to_be_clickable(self.ADD_ICE_CREAM))
         for _ in range(count):
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", add_button)
-            add_button.click()
-            time.sleep(0.3)
+            self.driver.find_element(*self.ADD_ICE_CREAM).click()
+
+    def get_ice_cream_count(self):
+        return int(self.driver.find_element(*self.ICE_CREAM_COUNT).text)
 
     # ------------------ Ordering ------------------
     def call_taxi(self):
-        self.driver.find_element(*self.ORDER_BUTTON).click()
+        self.driver.find_element(*self.ORDER_BUTTON_LOCATOR).click()
 
     def wait_for_car_search(self):
-        return self.wait.until(EC.visibility_of_element_located(self.CAR_SEARCH_MODAL))
+        return self.wait.until(EC.visibility_of_element_located(self.CAR_SEARCH_MODAL_LOCATOR))
